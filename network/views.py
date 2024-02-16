@@ -3,8 +3,10 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-
-from .models import User
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from .models import User, Post
+from .forms import NewPostForm
 
 
 def index(request):
@@ -61,3 +63,21 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "network/register.html")
+
+
+@login_required
+def new_post(request):
+    if request.method == 'POST':
+        form = NewPostForm(request.POST)
+        if form.is_valid():
+            content = form.cleaned_data['content']
+            # Create a new post instance and save it to the database
+            new_post = Post(content=content, user=request.user)
+            new_post.save()
+            return JsonResponse({'success': True})  # Return success response
+        else:
+            # Return error response if form is invalid
+            return JsonResponse({'success': False, 'error': 'Invalid form data'})
+    else:
+        form = NewPostForm()  # Create a new instance of the form
+    return render(request, 'network/new_post.html', {'form': form})
