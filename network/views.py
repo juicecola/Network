@@ -1,7 +1,7 @@
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, redirect
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -81,3 +81,45 @@ def new_post(request):
     else:
         form = NewPostForm()  # Create a new instance of the form
     return render(request, 'network/new_post.html', {'form': form})
+
+
+def profile(request, username):
+    user = get_object_or_404(User, username=username)
+
+    # Retrieve the count of followers and following users
+    followers_count = user.followers.count()
+    following_count = user.following.count()
+
+    # Retrieve all posts associated with the user in reverse chronological order
+    posts = Post.objects.filter(user=user).order_by('-timestamp')
+
+    # If the logged-in user is not the same as the displayed user, determine if the logged-in user is following the displayed user
+    if request.user != user:
+        is_following = user.followers.filter(
+            username=request.user.username).exists()
+    else:
+        is_following = False
+
+    context = {
+        'user': user,
+        'followers_count': followers_count,
+        'following_count': following_count,
+        'posts': posts,
+        'is_following': is_following,
+    }
+
+    return render(request, 'profile.html', context)
+
+
+@login_required
+def toggle_follow(request, username):
+    user_to_follow = get_object_or_404(User, username=username)
+
+    # Toggle follow status
+    if request.user != user_to_follow:
+        if request.user in user_to_follow.followers.all():
+            user_to_follow.followers.remove(request.user)
+        else:
+            user_to_follow.followers.add(request.user)
+
+    return redirect('profile', username=username)
