@@ -3,7 +3,7 @@ from django.urls import path
 
 from . import views
 
-from .views import ProfileView, follow_user, unfollow_user
+from .views import ProfileView, follow_user, unfollow_user, following_posts
 
 urlpatterns = [
     path("", views.index, name="index"),
@@ -13,4 +13,5 @@ urlpatterns = [
     path('<str:username>/', ProfileView.as_view(), name='profile'),
     path('<str:username>/follow/', follow_user, name='follow_user'),
     path('<str:username>/unfollow/', unfollow_user, name='unfollow_user'),
+    path("following/", following_posts, name="following_posts")
 ]

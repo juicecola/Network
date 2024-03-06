@@ -1,12 +1,14 @@
-from django.contrib.auth import authenticate, login, logout, redirect
+from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import User, Post
 from .forms import NewPostForm
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import DetailView
 
 
 def index(request):
@@ -123,3 +125,31 @@ def toggle_follow(request, username):
             user_to_follow.followers.add(request.user)
 
     return redirect('profile', username=username)
+
+
+class ProfileView(LoginRequiredMixin, DetailView):
+    model = User
+    template_name = 'profile.html'
+    context_object_name = 'profile'
+
+
+@login_required
+def follow_user(request, user_id):
+    user_to_follow = User.objects.get(pk=user_id)
+    request.user.following.add(user_to_follow)
+    return JsonResponse({'status': 'ok'})
+
+
+@login_required
+def unfollow_user(request, user_id):
+    user_to_unfollow = User.objects.get(pk=user_id)
+    request.user.following.remove(user_to_unfollow)
+    return JsonResponse({'status': 'ok'})
+
+
+@login_required
+def following_posts(request):
+    following_users = request.user.following.all()
+    following_posts = Post.objects.filter(
+        user__in=following_users).order_by('-timestamp')
+    return render(request, 'network/following_posts.html', {'posts': following_posts})
