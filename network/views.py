@@ -9,10 +9,33 @@ from .models import User, Post
 from .forms import NewPostForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import DetailView
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 def index(request):
-    return render(request, "network/index.html")
+    # Retrieve all posts ordered by timestamp
+    all_posts = Post.objects.all().order_by('-timestamp')
+
+    # Paginate the posts, displaying 10 posts per page
+    paginator = Paginator(all_posts, 10)
+
+    # Get the page number from the request query parameters
+    page_number = request.GET.get('page', 1)
+
+    try:
+        # Attempt to retrieve the specified page of posts
+        posts = paginator.page(page_number)
+    except PageNotAnInteger:
+        # If page is not an integer, default to the first page
+        posts = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver the last page of results
+        posts = paginator.page(paginator.num_pages)
+
+    return render(request, "network/index.html", {'posts': posts})
 
 
 def login_view(request):
@@ -145,6 +168,14 @@ def unfollow_user(request, user_id):
     user_to_unfollow = User.objects.get(pk=user_id)
     request.user.following.remove(user_to_unfollow)
     return JsonResponse({'status': 'ok'})
+
+
+@login_required
+def following_posts(request):
+    following_users = request.user.following.all()
+    following_posts = Post.objects.filter(
+        user__in=following_users).order_by('-timestamp')
+    return render(request, 'network/following_posts.html', {'posts': following_posts})
 
 
 @login_required
