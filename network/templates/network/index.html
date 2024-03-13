@@ -14,11 +14,57 @@
 <ul>
     {% for post in posts %}
         <li>
-            {{ post }}
+            {{ post.content }}
             {% if post.user == request.user %}
                 <button class="edit-post-btn" data-post-id="{{ post.id }}">Edit</button>
             {% endif %}
+            <p>Likes: <span id="like-count-{{ post.id }}">{{ post.likes }}</span></p>
+            <button class="like-btn" data-post-id="{{ post.id }}">Like</button>
+            <button class="unlike-btn" data-post-id="{{ post.id }}">Unlike</button>
         </li>
     {% endfor %}
 </ul>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.edit-post-btn').forEach(button => {
+            button.onclick = function() {
+                const post_id = this.dataset.postId;
+                // Implement the edit post functionality here
+            };
+        });
+
+        document.querySelectorAll('.like-btn').forEach(button => {
+            button.onclick = function() {
+                const post_id = this.dataset.postId;
+                fetch(`/like/${post_id}`, {
+                    method: 'PUT'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const likeCountSpan = document.querySelector(`#like-count-${post_id}`);
+                        likeCountSpan.innerText = data.likes;
+                    }
+                });
+            };
+        });
+
+        document.querySelectorAll('.unlike-btn').forEach(button => {
+            button.onclick = function() {
+                const post_id = this.dataset.postId;
+                fetch(`/unlike/${post_id}`, {
+                    method: 'PUT'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const likeCountSpan = document.querySelector(`#like-count-${post_id}`);
+                        likeCountSpan.innerText = data.likes;
+                    }
+                });
+            };
+        });
+    });
+</script>
 {% endblock %}
