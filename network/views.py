@@ -184,3 +184,17 @@ def following_posts(request):
     following_posts = Post.objects.filter(
         user__in=following_users).order_by('-timestamp')
     return render(request, 'network/following_posts.html', {'posts': following_posts})
+
+
+def like_post(request, post_id):
+    post = Post.objects.get(pk=post_id)
+    post.likes += 1
+    post.save()
+    return JsonResponse({'success': True, 'likes': post.likes})
+
+
+def unlike_post(request, post_id):
+    post = Post.objects.get(pk=post_id)
+    post.likes -= 1
+    post.save()
+    return JsonResponse({'success': True, 'likes': post.likes})
