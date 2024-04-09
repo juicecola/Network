@@ -3,8 +3,31 @@ from django.db import models
 
 
 class User(AbstractUser):
-    # Add any additional fields or methods here
-    pass
+    followers = models.ManyToManyField(
+        'self', related_name='following_users', symmetrical=False)
+    following = models.ManyToManyField(
+        'self', related_name='followers_users', symmetrical=False)
+    # Other fields and methods
+
+    def follow(self, user):
+        """
+        Follow another user.
+        """
+        if not self.is_following(user):
+            self.following.add(user)
+
+    def unfollow(self, user):
+        """
+        Unfollow another user.
+        """
+        if self.is_following(user):
+            self.following.remove(user)
+
+    def is_following(self, user):
+        """
+        Check if the user is following another user.
+        """
+        return self.following.filter(id=user.id).exists()
 
 
 class Post(models.Model):
