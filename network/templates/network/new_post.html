@@ -1,15 +1,13 @@
 <!-- network/templates/network/new_post.html -->
-
 {% extends 'network/layout.html' %}
 
+{% block title %}New Post{% endblock %}
+
 {% block body %}
-<div class="container">
-  <h2>New Post</h2>
-  <form method="post" id="new-post-form">
+<h2>New Post</h2>
+<form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Post</button>
-  </form>
-</div>
-<script src="{% static 'network/new_post.js' %}"></script>
+    <button type="submit">Submit</button>
+</form>
 {% endblock %}
